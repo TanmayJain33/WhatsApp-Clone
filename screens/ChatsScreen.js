@@ -5,11 +5,12 @@ import { db, auth } from "../firebase";
 import GlobalContext from "../context/Context";
 import ContactsFloatingIcon from "../components/ContactsFloatingIcon";
 import ListItem from "../components/ListItem";
+import useContacts from "../hooks/useHooks";
 
 export default function ChatsScreen() {
   const { currentUser } = auth;
-
-  const { rooms, setRooms } = useContext(GlobalContext);
+  const { rooms, setRooms, setUnfilteredRooms } = useContext(GlobalContext);
+  const contacts = useContacts();
 
   const chatsQuery = query(
     collection(db, "rooms"),
@@ -18,24 +19,25 @@ export default function ChatsScreen() {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(chatsQuery, (querySnapshot) => {
-      const parsedChats = querySnapshot.docs
-        .filter((doc) => doc.data().lastMessage)
-        .map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-          userB: doc
-            .data()
-            .participants.find((p) => p.email != currentUser.email),
-        }));
-      setRooms(parsedChats);
+      const parsedChats = querySnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+        userB: doc
+          .data()
+          .participants.find((p) => p.email != currentUser.email),
+      }));
+      setUnfilteredRooms(parsedChats);
+      setRooms(parsedChats.filter((doc) => doc.lastMessage));
     });
     return () => unsubscribe();
   }, []);
 
   function getUserB(user, contacts) {
     const userContact = contacts.find((c) => c.email == user.email);
-    if (usercontact) {
+    if (userContact && userContact.contactName) {
+      return { ...user, contactName: userContact.contactName };
     }
+    return user;
   }
 
   return (
@@ -47,7 +49,7 @@ export default function ChatsScreen() {
           key={room.id}
           room={room}
           time={room.lastMessage.createdAt}
-          user={getUserB}
+          user={getUserB(room.userB, contacts)}
         />
       ))}
       <ContactsFloatingIcon />

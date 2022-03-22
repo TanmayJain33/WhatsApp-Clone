@@ -4,9 +4,12 @@ import { theme } from "../utilities/colors";
 
 export default function ContextWrapper(props) {
   const [rooms, setRooms] = useState([]);
+  const [unfilteredRooms, setUnfilteredRooms] = useState([]);
 
   return (
-    <GlobalContext.Provider value={{ theme, rooms, setRooms }}>
+    <GlobalContext.Provider
+      value={{ theme, rooms, setRooms, unfilteredRooms, setUnfilteredRooms }}
+    >
       {props.children}
     </GlobalContext.Provider>
   );
